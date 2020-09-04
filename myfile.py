@@ -9,18 +9,26 @@ import matplotlib.pyplot as plt
 from DeepFool import *
 
 
-epsilons = [0, .05, .1, .15, .2, .25, .3,.4,.5]
+epsilons = [0, .05, .1, .15, .2, .25, .3]
 pretrained_model = "saved_model/lenet_mnist_model.pth"
 use_cuda=True
 
 def fgsm_attack(image, epsilon, data_grad):
     # Collect the element-wise sign of the data gradient
+
     sign_data_grad = data_grad.sign()
     # Create the perturbed image by adjusting each pixel of the input image
     perturbed_image = image - epsilon*sign_data_grad
     # Adding clipping to maintain [0,1] range
     perturbed_image = torch.clamp(perturbed_image, 0, 1)
     # Return the perturbed image
+    return perturbed_image
+
+def fgsm_rand_attack(image,epsilon,data_grad):
+    sign_data_grad=torch.randint(2,data_grad.shape)
+    sign_data_grad[sign_data_grad==0]=-1
+    perturbed_image = image - epsilon*sign_data_grad
+    perturbed_image = torch.clamp(perturbed_image, 0, 1)
     return perturbed_image
 
 
@@ -59,7 +67,7 @@ def test( model, device, test_loader, epsilon ):
         data_grad = data.grad.data
 
         # Call FGSM Attack
-        perturbed_data = fgsm_attack(data, epsilon, data_grad)
+        perturbed_data = fgsm_rand_attack(data, epsilon, data_grad)
 
         # Re-classify the perturbed image
         output = model(perturbed_data)
